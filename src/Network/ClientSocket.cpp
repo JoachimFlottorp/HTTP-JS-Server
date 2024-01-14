@@ -28,6 +28,8 @@ std::string ClientSocket::Receive()
     if(result == SOCKET_ERROR)
     {
 	std::cout << "recv failed with error: " << WSAGetLastError() << std::endl;
+
+	return "";
     }
 
     return {buffer, static_cast<size_t>(result)};

@@ -11,6 +11,8 @@
 #include <ws2tcpip.h>
 // clang-format on
 
+#include <optional>
+
 class ListenSocket final
 {
   public:
@@ -25,7 +27,7 @@ class ListenSocket final
     ~ListenSocket();
 
     void Listen();
-    ClientSocket Accept();
+    std::optional<ClientSocket> Accept();
 
   private:
     SOCKET m_Socket = INVALID_SOCKET;

@@ -2,18 +2,13 @@
 
 #include "../Defines.hpp"
 
-// clang-format off
 #include <winsock2.h>
-// clang-format on
 
 #include <string>
+#include <utility>
 
 class ClientSocket final
 {
-    // client socket holds the socket of the client that is connected to the server
-    // and the address of the client
-    // and references to the socket of the server and the address of the server
-
   public:
     struct SocketSettings
     {
@@ -22,8 +17,8 @@ class ClientSocket final
 	SOCKET clientSocket;
 	sockaddr_in serverAddr;
 
-	SocketSettings(u16 port, const std::string& ip, SOCKET clientSocket, sockaddr_in serverAddr)
-	    : port(port), ip(ip), clientSocket(clientSocket), serverAddr(serverAddr)
+	SocketSettings(u16 port, std::string ip, SOCKET clientSocket, sockaddr_in serverAddr)
+	    : port(port), ip(std::move(ip)), clientSocket(clientSocket), serverAddr(serverAddr)
 	{
 	}
     };

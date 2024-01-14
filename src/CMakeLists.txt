@@ -1,6 +1,9 @@
 set(SOURCE main.cpp
         Network/ListenSocket.cpp
         Network/ClientSocket.cpp
+        HTTP/HTTPRequest.cpp
+        HTTP/HTTPRequestParser.cpp
+        HTTP/HTTPMethod.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE})

@@ -1,4 +1,5 @@
 #include "Defines.hpp"
+#include "HTTP/HTTPRequestParser.hpp"
 #include "Network/ListenSocket.hpp"
 
 #include <iostream>
@@ -12,13 +13,33 @@ int main()
 
     std::cout << "Listening on port " << port << std::endl;
 
-    auto client = socket.Accept();
-    std::cout << "Client connected" << std::endl;
+    bool running = true;
+    while(running)
+    {
+	auto oClient = socket.Accept();
+	if(!oClient.has_value())
+	    continue;
 
-    auto message = client.Receive();
-    std::cout << "Received: " << message << std::endl;
+	auto client = oClient.value();
 
-    client.Send("Hello from server!");
+	std::cout << "Client connected" << std::endl;
+
+	auto message = client.Receive();
+	std::cout << "Received: " << message << std::endl;
+
+	HTTPRequest request;
+	auto parseResult = HTTPRequestParser::Parse(request, message);
+	if(parseResult != HTTPRequestParser::ParseResult::Success)
+	{
+	    std::cout << "Failed to parse request " << static_cast<u32>(parseResult) << std::endl;
+	    continue;
+	    // FIXME: Send 400 Bad Request
+	}
+
+	request.DebugLog();
+
+	client.Send("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+    }
 
     return 0;
 }

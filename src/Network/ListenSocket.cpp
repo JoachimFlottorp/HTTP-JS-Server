@@ -55,7 +55,7 @@ void ListenSocket::Listen()
     }
 }
 
-ClientSocket ListenSocket::Accept()
+std::optional<ClientSocket> ListenSocket::Accept()
 {
     SOCKET clientSocket = accept(m_Socket, nullptr, nullptr);
     if(clientSocket == INVALID_SOCKET)
