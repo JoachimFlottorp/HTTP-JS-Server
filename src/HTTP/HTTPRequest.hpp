@@ -5,6 +5,11 @@
 #include <map>
 #include <string>
 
+struct CaseInsensitiveComparer
+{
+    bool operator()(const std::string& lhs, const std::string& rhs) const;
+};
+
 struct HTTPRequestLine
 {
     // FIXME: Better defaults.
@@ -16,7 +21,7 @@ struct HTTPRequestLine
     HTTPRequestLine(HTTPMethod method, std::string uri, std::string version);
 };
 
-typedef std::map<std::string, std::string> HTTPRequestHeaders;
+typedef std::map<std::string, std::string, CaseInsensitiveComparer> HTTPRequestHeaders;
 
 class HTTPRequest
 {

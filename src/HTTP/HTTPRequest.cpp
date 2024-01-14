@@ -1,7 +1,19 @@
 #include "HTTPRequest.hpp"
 
+#include <algorithm>
 #include <iostream>
 #include <utility>
+
+bool CaseInsensitiveComparer::operator()(const std::string& lhs, const std::string& rhs) const
+{
+    // clang-format off
+    return std::lexicographical_compare(
+    lhs.begin(), lhs.end(),
+    rhs.begin(), rhs.end(),
+    [](char a, char b) { return std::tolower(a) < std::tolower(b); }
+    );
+    // clang-format on
+}
 
 HTTPRequestLine::HTTPRequestLine()
 {
@@ -32,7 +44,13 @@ void HTTPRequest::SetHeader(std::string key, std::string value)
 
 const std::string& HTTPRequest::GetHeader(const std::string& key) const
 {
-    return m_Headers.at(key);
+    if(auto it = m_Headers.find(key); it != m_Headers.end())
+    {
+	return it->second;
+    }
+
+    static const std::string empty;
+    return empty;
 }
 
 bool HTTPRequest::HasHeader(const std::string& key) const

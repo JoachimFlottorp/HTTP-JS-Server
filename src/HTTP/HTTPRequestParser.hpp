@@ -17,8 +17,7 @@ class HTTPRequestParser
 	InvalidVersion,
 	InvalidBody
     };
-
-  public:
+    
     static ParseResult Parse(HTTPRequest& req, const std::string& data);
 
   private:

@@ -7,7 +7,7 @@
 constexpr auto SP = ' ';
 constexpr auto CR = '\r';
 constexpr auto LF = '\n';
-constexpr auto CLRF = "\r\n";
+constexpr auto CRLF = "\r\n";
 
 HTTPRequestParser::ParseResult HTTPRequestParser::Parse(HTTPRequest& req, const std::string& data)
 {
@@ -63,7 +63,7 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseRequestLine()
     }
     m_Index++;
 
-    auto version = ConsumeUntil(CR);
+    auto version = ConsumeUntil(CRLF);
     if(version.empty())
     {
 	return ParseResult::InvalidVersion;
@@ -90,31 +90,53 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseHeaders()
 
     auto lineParser = [this]() -> std::optional<std::pair<std::string, std::string>>
     {
-	auto key = ConsumeUntil(':');
-	if(key.empty())
+	// 1. Consume header until we reach CRLF.
+	auto components = ConsumeUntil(CRLF);
+	if(components.empty())
 	{
 	    return std::nullopt;
 	}
 
-	m_Index++;
+	// 2. Split header into key and value.
+	auto colonIndex = components.find(':');
 
-	if(m_Index >= m_Data.size())
-	{
-	    return std::make_pair(key, "");
-	}
+	auto key = components.substr(0, colonIndex);
+	auto value = components.substr(colonIndex + 1);
 
-	auto value = ConsumeUntil(CR);
-	if(value.empty())
-	{
-	    return std::make_pair(key, "");
-	}
+	// 3. Trim whitespace.
+	key.erase(0, key.find_first_not_of(' '));
+	key.erase(key.find_last_not_of(' ') + 1);
 
-	if(!ExpectCRLF())
-	{
-	    return std::make_pair(key, "");
-	}
+	value.erase(0, value.find_first_not_of(' '));
+	value.erase(value.find_last_not_of(' ') + 1);
 
 	return std::make_pair(key, value);
+
+	//	auto key = ConsumeUntil(':');
+	//	if(key.empty())
+	//	{
+	//	    return std::nullopt;
+	//	}
+	//
+	//	m_Index++;
+	//
+	//	if(m_Index >= m_Data.size())
+	//	{
+	//	    return std::make_pair(key, "");
+	//	}
+	//
+	//	auto value = ConsumeUntil(CR);
+	//	if(value.empty())
+	//	{
+	//	    return std::make_pair(key, "");
+	//	}
+	//
+	//	if(!ExpectCRLF())
+	//	{
+	//	    return std::make_pair(key, "");
+	//	}
+	//
+	//	return std::make_pair(key, value);
     };
 
     while(true)
@@ -131,7 +153,7 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseHeaders()
 
 	// FIXME: Should be placed somewhere else.
 	// This should denote end of headers.
-	if(key == CLRF)
+	if(key == CRLF)
 	{
 	    break;
 	}
@@ -179,7 +201,7 @@ bool HTTPRequestParser::CheckBody()
 	return false;
     }
 
-    // 1. Check for Content-Length header.
+    // 2. Check for Content-Length header.
     if(m_Request.HasHeader("Content-Length"))
     {
 	try
@@ -194,7 +216,9 @@ bool HTTPRequestParser::CheckBody()
 	}
     }
 
-    // FIXME: 2. Check for Transfer-Encoding header.
+    // FIXME: 3. Check for Transfer-Encoding header.
+
+    return false;
 }
 
 std::string HTTPRequestParser::ConsumeUntil(char c)

@@ -9,6 +9,10 @@ ClientSocket::ClientSocket(const ClientSocket::SocketSettings& settings)
 ClientSocket::~ClientSocket()
 {
     closesocket(m_Socket);
+
+#ifdef _DEBUG
+    std::cout << "Closed client socket " << this->m_Port << " (" << this->m_RemoteIP << ")" << std::endl;
+#endif
 }
 
 void ClientSocket::Send(const std::string& data)

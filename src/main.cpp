@@ -16,6 +16,7 @@ int main()
     bool running = true;
     while(running)
     {
+	// FIXME: oClient and client will call destructors twice.
 	auto oClient = socket.Accept();
 	if(!oClient.has_value())
 	    continue;
@@ -37,6 +38,12 @@ int main()
 	}
 
 	request.DebugLog();
+
+	auto xHeader = request.GetHeader("x-test");
+	if(!xHeader.empty())
+	{
+	    std::cout << "x-test: " << xHeader << std::endl;
+	}
 
 	client.Send("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
     }
