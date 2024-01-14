@@ -1,5 +1,6 @@
 #include "Defines.hpp"
 #include "HTTP/HTTPRequestParser.hpp"
+#include "HTTP/HTTPResponse.hpp"
 #include "Network/ListenSocket.hpp"
 
 #include <iostream>
@@ -39,13 +40,18 @@ int main()
 
 	request.DebugLog();
 
-	auto xHeader = request.GetHeader("x-test");
+	auto xHeader = request.GetHeaders().Get("x-test");
 	if(!xHeader.empty())
 	{
 	    std::cout << "x-test: " << xHeader << std::endl;
 	}
 
-	client.Send("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n");
+	auto response = HTTPResponse()
+			    .SetStatusCode(200)			     //
+			    .SetHeader("Content-Type", "text/plain") //
+			    .SetBody("Hello, World!");
+
+	client.Send(response.ToString());
     }
 
     return 0;

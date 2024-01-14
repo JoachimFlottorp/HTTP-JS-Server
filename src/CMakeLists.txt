@@ -4,6 +4,9 @@ set(SOURCE main.cpp
         HTTP/HTTPRequest.cpp
         HTTP/HTTPRequestParser.cpp
         HTTP/HTTPMethod.cpp
+        HTTP/HTTPHeaders.cpp
+        HTTP/HTTPResponse.cpp
+        HTTP/HTTPStatus.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SOURCE})

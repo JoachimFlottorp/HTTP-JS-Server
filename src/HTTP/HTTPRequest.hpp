@@ -1,14 +1,10 @@
 #pragma once
 
+#include "HTTPHeaders.hpp"
 #include "HTTPMethod.hpp"
 
 #include <map>
 #include <string>
-
-struct CaseInsensitiveComparer
-{
-    bool operator()(const std::string& lhs, const std::string& rhs) const;
-};
 
 struct HTTPRequestLine
 {
@@ -21,32 +17,24 @@ struct HTTPRequestLine
     HTTPRequestLine(HTTPMethod method, std::string uri, std::string version);
 };
 
-typedef std::map<std::string, std::string, CaseInsensitiveComparer> HTTPRequestHeaders;
-
 class HTTPRequest
 {
   public:
     HTTPRequest();
-    HTTPRequest(HTTPRequestLine requestLine, HTTPRequestHeaders headers, std::string body);
+    HTTPRequest(HTTPRequestLine requestLine, HTTPHeaders headers, std::string body);
 
     ~HTTPRequest();
 
-    void SetHeader(std::string key, std::string value);
-    const std::string& GetHeader(const std::string& key) const;
-    bool HasHeader(const std::string& key) const;
-
     HTTPMethod GetMethod() const { return m_RequestLine.method; }
+    HTTPHeaders& GetHeaders() { return m_Headers; }
+
+    [[nodiscard]] std::string ToString() const;
 
     void DebugLog() const;
 
   private:
-    void SetRequestLine(HTTPRequestLine requestLine);
-    void SetHeaders(HTTPRequestHeaders headers);
-    void SetBody(std::string body);
-
-  private:
     HTTPRequestLine m_RequestLine;
-    HTTPRequestHeaders m_Headers;
+    HTTPHeaders m_Headers;
     std::string m_Body;
 
     friend class HTTPRequestParser;

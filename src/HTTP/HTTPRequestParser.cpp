@@ -74,100 +74,16 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseRequestLine()
 	return ParseResult::InvalidVersion;
     }
 
-    m_Request.SetRequestLine(HTTPRequestLine(enumMethod, uri, version));
+    m_Request.m_RequestLine = HTTPRequestLine(enumMethod, uri, version);
 
     return ParseResult::Success;
 }
 
 HTTPRequestParser::ParseResult HTTPRequestParser::ParseHeaders()
 {
-    //    message-header = field-name ":" [ field-value ]
-    //		       field-name     = token
-    //	      field-value    = *( field-content | LWS )
-    //	      field-content  = <the OCTETs making up the field-value
-    //	      and consisting of either *TEXT or combinations
-    //	      of token, separators, and quoted-string>
+    auto headers = HTTPHeaders::FromString(m_Data.substr(m_Index));
 
-    auto lineParser = [this]() -> std::optional<std::pair<std::string, std::string>>
-    {
-	// 1. Consume header until we reach CRLF.
-	auto components = ConsumeUntil(CRLF);
-	if(components.empty())
-	{
-	    return std::nullopt;
-	}
-
-	// 2. Split header into key and value.
-	auto colonIndex = components.find(':');
-
-	auto key = components.substr(0, colonIndex);
-	auto value = components.substr(colonIndex + 1);
-
-	// 3. Trim whitespace.
-	key.erase(0, key.find_first_not_of(' '));
-	key.erase(key.find_last_not_of(' ') + 1);
-
-	value.erase(0, value.find_first_not_of(' '));
-	value.erase(value.find_last_not_of(' ') + 1);
-
-	return std::make_pair(key, value);
-
-	//	auto key = ConsumeUntil(':');
-	//	if(key.empty())
-	//	{
-	//	    return std::nullopt;
-	//	}
-	//
-	//	m_Index++;
-	//
-	//	if(m_Index >= m_Data.size())
-	//	{
-	//	    return std::make_pair(key, "");
-	//	}
-	//
-	//	auto value = ConsumeUntil(CR);
-	//	if(value.empty())
-	//	{
-	//	    return std::make_pair(key, "");
-	//	}
-	//
-	//	if(!ExpectCRLF())
-	//	{
-	//	    return std::make_pair(key, "");
-	//	}
-	//
-	//	return std::make_pair(key, value);
-    };
-
-    while(true)
-    {
-	auto line = lineParser();
-	if(!line.has_value())
-	{
-	    break;
-	}
-
-	auto l = line.value();
-	auto key = l.first;
-	auto value = l.second;
-
-	// FIXME: Should be placed somewhere else.
-	// This should denote end of headers.
-	if(key == CRLF)
-	{
-	    break;
-	}
-
-	m_Request.SetHeader(std::move(key), std::move(value));
-
-	// FIXME: Maybe redundant?
-	if(m_Index >= m_Data.size())
-	{
-	    break;
-	}
-
-	m_Index += 2;
-    }
+    m_Request.m_Headers = std::move(headers);
 
     return ParseResult::Success;
 }
@@ -188,7 +104,7 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseBody()
 	return ParseResult::InvalidBody;
     }
 
-    m_Request.SetBody(m_Data.substr(m_Index, m_BodySize));
+    m_Request.m_Body = m_Data.substr(m_Index, m_BodySize);
 
     return ParseResult::Success;
 }
@@ -202,11 +118,11 @@ bool HTTPRequestParser::CheckBody()
     }
 
     // 2. Check for Content-Length header.
-    if(m_Request.HasHeader("Content-Length"))
+    if(m_Request.GetHeaders().Has("Content-Length"))
     {
 	try
 	{
-	    auto contentLength = std::stoi(m_Request.GetHeader("Content-Length"));
+	    auto contentLength = std::stoi(m_Request.GetHeaders().Get("Content-Length"));
 	    m_BodySize = contentLength;
 	    return m_Data.size() - m_Index >= contentLength;
 	}

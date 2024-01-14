@@ -4,17 +4,6 @@
 #include <iostream>
 #include <utility>
 
-bool CaseInsensitiveComparer::operator()(const std::string& lhs, const std::string& rhs) const
-{
-    // clang-format off
-    return std::lexicographical_compare(
-    lhs.begin(), lhs.end(),
-    rhs.begin(), rhs.end(),
-    [](char a, char b) { return std::tolower(a) < std::tolower(b); }
-    );
-    // clang-format on
-}
-
 HTTPRequestLine::HTTPRequestLine()
 {
 }
@@ -28,34 +17,13 @@ HTTPRequest::HTTPRequest()
 {
 }
 
-HTTPRequest::HTTPRequest(HTTPRequestLine requestLine, HTTPRequestHeaders headers, std::string body)
+HTTPRequest::HTTPRequest(HTTPRequestLine requestLine, HTTPHeaders headers, std::string body)
     : m_RequestLine(std::move(requestLine)), m_Headers(std::move(headers)), m_Body(std::move(body))
 {
 }
 
 HTTPRequest::~HTTPRequest()
 {
-}
-
-void HTTPRequest::SetHeader(std::string key, std::string value)
-{
-    m_Headers[std::move(key)] = std::move(value);
-}
-
-const std::string& HTTPRequest::GetHeader(const std::string& key) const
-{
-    if(auto it = m_Headers.find(key); it != m_Headers.end())
-    {
-	return it->second;
-    }
-
-    static const std::string empty;
-    return empty;
-}
-
-bool HTTPRequest::HasHeader(const std::string& key) const
-{
-    return m_Headers.find(key) != m_Headers.end();
 }
 
 void HTTPRequest::DebugLog() const
@@ -65,7 +33,7 @@ void HTTPRequest::DebugLog() const
     std::cout << "Version: " << m_RequestLine.version << std::endl;
 
     std::cout << "Headers:" << std::endl;
-    for(const auto& [key, value] : m_Headers)
+    for(const auto& [key, value] : m_Headers.m_HeaderStore)
     {
 	std::cout << "  " << key << ": " << value << std::endl;
     }
@@ -76,17 +44,24 @@ void HTTPRequest::DebugLog() const
 	std::cout << "Body: " << m_Body << std::endl;
 }
 
-void HTTPRequest::SetRequestLine(HTTPRequestLine requestLine)
+std::string HTTPRequest::ToString() const
 {
-    m_RequestLine = std::move(requestLine);
-}
+    // FIXME: Less string copies.
 
-void HTTPRequest::SetHeaders(HTTPRequestHeaders headers)
-{
-    m_Headers = std::move(headers);
-}
+    std::string result;
 
-void HTTPRequest::SetBody(std::string body)
-{
-    m_Body = std::move(body);
+    result += HTTPMethodToString(m_RequestLine.method);
+    result += " ";
+    result += m_RequestLine.uri;
+    result += " ";
+    result += m_RequestLine.version;
+    result += "\r\n";
+    
+    result += m_Headers.ToString();
+
+    result += "\r\n";
+
+    result += m_Body;
+
+    return result;
 }

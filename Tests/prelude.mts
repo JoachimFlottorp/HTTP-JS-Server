@@ -4,11 +4,12 @@ import { readAll } from "https://deno.land/std@0.212.0/io/read_all.ts";
 const testPort = 27015;
 
 export type TestObject = {
-	name: string;
 	test: () => Promise<void>;
 };
 
-export type TestModule = TestObject[];
+export type TestFunction = () => Promise<void>;
+
+export type TestModule = Record<string, TestFunction | TestObject>;
 
 export async function makeRequest(request: Request): Promise<Response>;
 export async function makeRequest(request: string[]): Promise<Response>;
