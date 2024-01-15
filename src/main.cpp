@@ -7,52 +7,52 @@
 
 int main()
 {
-    constexpr auto port = 27015;
+				constexpr auto port = 27015;
 
-    ListenSocket socket {ListenSocket::SocketSettings(port)};
-    socket.Listen();
+				ListenSocket socket {ListenSocket::SocketSettings(port)};
+				socket.Listen();
 
-    std::cout << "Listening on port " << port << std::endl;
+				std::cout << "Listening on port " << port << std::endl;
 
-    bool running = true;
-    while(running)
-    {
-	// FIXME: oClient and client will call destructors twice.
-	auto oClient = socket.Accept();
-	if(!oClient.has_value())
-	    continue;
+				bool running = true;
+				while(running)
+				{
+								// FIXME: oClient and client will call destructors twice.
+								auto oClient = socket.Accept();
+								if(!oClient.has_value())
+												continue;
 
-	auto client = oClient.value();
+								auto client = oClient.value();
 
-	std::cout << "Client connected" << std::endl;
+								std::cout << "Client connected" << std::endl;
 
-	auto message = client.Receive();
-	std::cout << "Received: " << message << std::endl;
+								auto message = client.Receive();
+								std::cout << "Received: " << message << std::endl;
 
-	HTTPRequest request;
-	auto parseResult = HTTPRequestParser::Parse(request, message);
-	if(parseResult != HTTPRequestParser::ParseResult::Success)
-	{
-	    std::cout << "Failed to parse request " << static_cast<u32>(parseResult) << std::endl;
-	    continue;
-	    // FIXME: Send 400 Bad Request
-	}
+								HTTPRequest request;
+								auto parseResult = HTTPRequestParser::Parse(request, message);
+								if(parseResult != HTTPRequestParser::ParseResult::Success)
+								{
+												std::cout << "Failed to parse request " << static_cast<u32>(parseResult) << std::endl;
+												continue;
+												// FIXME: Send 400 Bad Request
+								}
 
-	request.DebugLog();
+								request.DebugLog();
 
-	auto xHeader = request.GetHeaders().Get("x-test");
-	if(!xHeader.empty())
-	{
-	    std::cout << "x-test: " << xHeader << std::endl;
-	}
+								auto xHeader = request.GetHeaders().Get("x-test");
+								if(!xHeader.empty())
+								{
+												std::cout << "x-test: " << xHeader << std::endl;
+								}
 
-	auto response = HTTPResponse()
-			    .SetStatusCode(200)			     //
-			    .SetHeader("Content-Type", "text/plain") //
-			    .SetBody("Hello, World!");
+								auto response = HTTPResponse()
+																												.SetStatusCode(200)																						//
+																												.SetHeader("Content-Type", "text/plain") //
+																												.SetBody("Hello, World!");
 
-	client.Send(response.ToString());
-    }
+								client.Send(response.ToString());
+				}
 
-    return 0;
+				return 0;
 }

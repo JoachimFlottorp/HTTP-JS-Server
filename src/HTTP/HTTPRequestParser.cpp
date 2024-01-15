@@ -11,29 +11,29 @@ constexpr auto CRLF = "\r\n";
 
 HTTPRequestParser::ParseResult HTTPRequestParser::Parse(HTTPRequest& req, const std::string& data)
 {
-    HTTPRequestParser parser(req, data);
+				HTTPRequestParser parser(req, data);
 
-    if(auto result = parser.ParseRequestLine(); result != ParseResult::Success)
-    {
-	return result;
-    }
+				if(auto result = parser.ParseRequestLine(); result != ParseResult::Success)
+				{
+								return result;
+				}
 
-    if(!parser.ExpectCRLF())
-    {
-	return ParseResult::InvalidRequestLine;
-    }
+				if(!parser.ExpectCRLF())
+				{
+								return ParseResult::InvalidRequestLine;
+				}
 
-    parser.m_Index += 2;
+				parser.m_Index += 2;
 
-    // NOTE: Currently shouldn't fail.
-    (void)parser.ParseHeaders();
+				// NOTE: Currently shouldn't fail.
+				(void)parser.ParseHeaders();
 
-    if(auto result = parser.ParseBody(); result != ParseResult::Success)
-    {
-	return result;
-    }
+				if(auto result = parser.ParseBody(); result != ParseResult::Success)
+				{
+								return result;
+				}
 
-    return ParseResult::Success;
+				return ParseResult::Success;
 }
 
 HTTPRequestParser::HTTPRequestParser(HTTPRequest& req, std::string data) : m_Request(req), m_Data(std::move(data))
@@ -42,148 +42,148 @@ HTTPRequestParser::HTTPRequestParser(HTTPRequest& req, std::string data) : m_Req
 
 HTTPRequestParser::ParseResult HTTPRequestParser::ParseRequestLine()
 {
-    // Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
-    // Method         = "GET" | "POST" | "PUT" | "DELETE" | "HEAD"
-    // Request-URI    = "*" | absoluteURI | abs_path | authority
-    // HTTP-Version   = "HTTP" "/" 1*DIGIT "." 1*DIGIT
+				// Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
+				// Method         = "GET" | "POST" | "PUT" | "DELETE" | "HEAD"
+				// Request-URI    = "*" | absoluteURI | abs_path | authority
+				// HTTP-Version   = "HTTP" "/" 1*DIGIT "." 1*DIGIT
 
-    auto method = ConsumeUntil(SP);
-    if(method.empty())
-    {
-	return ParseResult::InvalidMethod;
-    }
-    m_Index++;
+				auto method = ConsumeUntil(SP);
+				if(method.empty())
+				{
+								return ParseResult::InvalidMethod;
+				}
+				m_Index++;
 
-    auto enumMethod = HTTPMethodFromString(method);
+				auto enumMethod = HTTPMethodFromString(method);
 
-    auto uri = ConsumeUntil(SP);
-    if(uri.empty())
-    {
-	return ParseResult::InvalidURI;
-    }
-    m_Index++;
+				auto uri = ConsumeUntil(SP);
+				if(uri.empty())
+				{
+								return ParseResult::InvalidURI;
+				}
+				m_Index++;
 
-    auto version = ConsumeUntil(CRLF);
-    if(version.empty())
-    {
-	return ParseResult::InvalidVersion;
-    }
+				auto version = ConsumeUntil(CRLF);
+				if(version.empty())
+				{
+								return ParseResult::InvalidVersion;
+				}
 
-    if(!ExpectCRLF())
-    {
-	return ParseResult::InvalidVersion;
-    }
+				if(!ExpectCRLF())
+				{
+								return ParseResult::InvalidVersion;
+				}
 
-    m_Request.m_RequestLine = HTTPRequestLine(enumMethod, uri, version);
+				m_Request.m_RequestLine = HTTPRequestLine(enumMethod, uri, version);
 
-    return ParseResult::Success;
+				return ParseResult::Success;
 }
 
 HTTPRequestParser::ParseResult HTTPRequestParser::ParseHeaders()
 {
-    auto headers = HTTPHeaders::FromString(m_Data.substr(m_Index));
+				auto headers = HTTPHeaders::FromString(m_Data.substr(m_Index));
 
-    m_Request.m_Headers = std::move(headers);
+				m_Request.m_Headers = std::move(headers);
 
-    return ParseResult::Success;
+				return ParseResult::Success;
 }
 
 HTTPRequestParser::ParseResult HTTPRequestParser::ParseBody()
 {
-    // message-body = entity-body
-    // 		    | <entity-body encoded as per Transfer-Encoding>
+				// message-body = entity-body
+				// 		    | <entity-body encoded as per Transfer-Encoding>
 
-    if(!CheckBody())
-    {
-	// Ignore body.
-	return ParseResult::Success;
-    }
+				if(!CheckBody())
+				{
+								// Ignore body.
+								return ParseResult::Success;
+				}
 
-    if(!ExpectCRLF())
-    {
-	return ParseResult::InvalidBody;
-    }
+				if(!ExpectCRLF())
+				{
+								return ParseResult::InvalidBody;
+				}
 
-    m_Request.m_Body = m_Data.substr(m_Index, m_BodySize);
+				m_Request.m_Body = m_Data.substr(m_Index, m_BodySize);
 
-    return ParseResult::Success;
+				return ParseResult::Success;
 }
 
 bool HTTPRequestParser::CheckBody()
 {
-    // 1. If the METHOD is HEAD, the server MUST NOT return a message-body in the response.
-    if(m_Request.GetMethod() == HTTPMethod::HEAD)
-    {
-	return false;
-    }
+				// 1. If the METHOD is HEAD, the server MUST NOT return a message-body in the response.
+				if(m_Request.GetMethod() == HTTPMethod::HEAD)
+				{
+								return false;
+				}
 
-    // 2. Check for Content-Length header.
-    if(m_Request.GetHeaders().Has("Content-Length"))
-    {
-	try
-	{
-	    auto contentLength = std::stoi(m_Request.GetHeaders().Get("Content-Length"));
-	    m_BodySize = contentLength;
-	    return m_Data.size() - m_Index >= contentLength;
-	}
-	catch(...)
-	{
-	    return false;
-	}
-    }
+				// 2. Check for Content-Length header.
+				if(m_Request.GetHeaders().Has("Content-Length"))
+				{
+								try
+								{
+												auto contentLength = std::stoi(m_Request.GetHeaders().Get("Content-Length"));
+												m_BodySize = contentLength;
+												return m_Data.size() - m_Index >= contentLength;
+								}
+								catch(...)
+								{
+												return false;
+								}
+				}
 
-    // FIXME: 3. Check for Transfer-Encoding header.
+				// FIXME: 3. Check for Transfer-Encoding header.
 
-    return false;
+				return false;
 }
 
 std::string HTTPRequestParser::ConsumeUntil(char c)
 {
-    // FIXME: Clean this and the std::string version up.
+				// FIXME: Clean this and the std::string version up.
 
-    std::string temp;
+				std::string temp;
 
-    while(m_Index < m_Data.size())
-    {
-	if(m_Data[m_Index] == c)
-	{
-	    return temp;
-	}
+				while(m_Index < m_Data.size())
+				{
+								if(m_Data[m_Index] == c)
+								{
+												return temp;
+								}
 
-	temp += m_Data[m_Index];
-	++m_Index;
-    }
+								temp += m_Data[m_Index];
+								++m_Index;
+				}
 
-    return temp;
+				return temp;
 }
 
 std::string HTTPRequestParser::ConsumeUntil(const std::string& str)
 {
-    std::string temp;
+				std::string temp;
 
-    while(m_Index < m_Data.size())
-    {
-	if(m_Data[m_Index] == str[0])
-	{
-	    if(m_Data.substr(m_Index, str.size()) == str)
-	    {
-		return temp;
-	    }
-	}
+				while(m_Index < m_Data.size())
+				{
+								if(m_Data[m_Index] == str[0])
+								{
+												if(m_Data.substr(m_Index, str.size()) == str)
+												{
+																return temp;
+												}
+								}
 
-	temp += m_Data[m_Index];
-	++m_Index;
-    }
+								temp += m_Data[m_Index];
+								++m_Index;
+				}
 
-    return temp;
+				return temp;
 }
 
 bool HTTPRequestParser::ExpectCRLF()
 {
-    if(m_Index + 1 >= m_Data.size())
-    {
-	return false;
-    }
+				if(m_Index + 1 >= m_Data.size())
+				{
+								return false;
+				}
 
-    return m_Data[m_Index] == CR && m_Data[m_Index + 1] == LF;
+				return m_Data[m_Index] == CR && m_Data[m_Index + 1] == LF;
 }

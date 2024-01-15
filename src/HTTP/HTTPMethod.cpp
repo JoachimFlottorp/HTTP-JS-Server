@@ -3,9 +3,9 @@
 
 const std::string& HTTPMethodToString(HTTPMethod method)
 {
-    static std::string unknown = "UNKNOWN";
-    static std::map<HTTPMethod, std::string> methods = {
-	// clang-format off
+				static std::string unknown = "UNKNOWN";
+				static std::map<HTTPMethod, std::string> methods = {
+								// clang-format off
 	{HTTPMethod::OPTIONS, "OPTIONS"},
 	{HTTPMethod::GET, "GET"},
 	{HTTPMethod::HEAD, "HEAD"},
@@ -14,19 +14,19 @@ const std::string& HTTPMethodToString(HTTPMethod method)
 	{HTTPMethod::DELETE, "DELETE"},
 	{HTTPMethod::TRACE, "TRACE"},
 	{HTTPMethod::CONNECT, "CONNECT"},
-	// clang-format on
-    };
+								// clang-format on
+				};
 
-    if(methods.find(method) != methods.end())
-	return methods[method];
-    else
-	return unknown;
+				if(methods.find(method) != methods.end())
+								return methods[method];
+				else
+								return unknown;
 }
 
 HTTPMethod HTTPMethodFromString(const std::string& string)
 {
-    static std::map<std::string, HTTPMethod> methods = {
-	// clang-format off
+				static std::map<std::string, HTTPMethod> methods = {
+								// clang-format off
 	{"OPTIONS", HTTPMethod::OPTIONS},
 	{"GET", HTTPMethod::GET},
 	{"HEAD", HTTPMethod::HEAD},
@@ -35,8 +35,8 @@ HTTPMethod HTTPMethodFromString(const std::string& string)
 	{"DELETE", HTTPMethod::DELETE},
 	{"TRACE", HTTPMethod::TRACE},
 	{"CONNECT", HTTPMethod::CONNECT},
-	// clang-format on
-    };
+								// clang-format on
+				};
 
-    return methods[string];
+				return methods[string];
 }
