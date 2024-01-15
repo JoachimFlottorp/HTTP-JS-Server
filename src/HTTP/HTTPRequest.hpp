@@ -25,7 +25,8 @@ class HTTPRequest
 
     ~HTTPRequest();
 
-    HTTPMethod GetMethod() const { return m_RequestLine.method; }
+    [[nodiscard]] HTTPMethod GetMethod() const { return m_RequestLine.method; }
+    [[nodiscard]] std::string GetURI() const { return m_RequestLine.uri; }
     HTTPHeaders& GetHeaders() { return m_Headers; }
 
     [[nodiscard]] std::string ToString() const;

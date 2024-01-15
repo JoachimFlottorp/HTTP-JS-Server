@@ -7,49 +7,49 @@ constexpr auto CRLF = "\r\n";
 
 std::string ConsumeUntil(const std::string& data, u32& index, const std::string& c)
 {
-    auto startIndex = index;
-    auto endIndex = data.find(c, startIndex);
+  auto startIndex = index;
+  auto endIndex = data.find(c, startIndex);
 
-    if(endIndex == std::string_view::npos)
-    {
+  if(endIndex == std::string_view::npos)
+  {
 	index = data.size();
 	return data.substr(startIndex);
-    }
+  }
 
-    index = endIndex;
-    return data.substr(startIndex, endIndex - startIndex);
+  index = endIndex;
+  return data.substr(startIndex, endIndex - startIndex);
 }
 
 bool CaseInsensitiveComparer::operator()(const std::string& lhs, const std::string& rhs) const
 {
-    // clang-format off
+  // clang-format off
     return std::lexicographical_compare(
     lhs.begin(), lhs.end(),
     rhs.begin(), rhs.end(),
     [](char a, char b) { return std::tolower(a) < std::tolower(b); }
     );
-    // clang-format on
+  // clang-format on
 }
 
 HTTPHeaders HTTPHeaders::FromString(const std::string& data)
 {
-    //    message-header = field-name ":" [ field-value ]
-    //		       field-name     = token
-    //	      field-value    = *( field-content | LWS )
-    //	      field-content  = <the OCTETs making up the field-value
-    //	      and consisting of either *TEXT or combinations
-    //	      of token, separators, and quoted-string>
+  //    message-header = field-name ":" [ field-value ]
+  //		       field-name     = token
+  //	      field-value    = *( field-content | LWS )
+  //	      field-content  = <the OCTETs making up the field-value
+  //	      and consisting of either *TEXT or combinations
+  //	      of token, separators, and quoted-string>
 
-    HTTPHeaders headers {};
-    u32 index = 0;
+  HTTPHeaders headers {};
+  u32 index = 0;
 
-    while(true)
-    {
+  while(true)
+  {
 	// 1. Consume header until we reach CRLF.
 	auto components = ConsumeUntil(data, index, CRLF);
 	if(components.empty())
 	{
-	    break;
+	  break;
 	}
 
 	// 2. Split header into key and value.
@@ -69,7 +69,7 @@ HTTPHeaders HTTPHeaders::FromString(const std::string& data)
 	// This should denote end of headers.
 	if(key == CRLF)
 	{
-	    break;
+	  break;
 	}
 
 	// 4. Add header to header store.
@@ -77,9 +77,9 @@ HTTPHeaders HTTPHeaders::FromString(const std::string& data)
 
 	// 5. Increment index to skip CRLF.
 	index += 2;
-    }
+  }
 
-    return headers;
+  return headers;
 }
 
 HTTPHeaders::HTTPHeaders()
@@ -88,39 +88,39 @@ HTTPHeaders::HTTPHeaders()
 
 void HTTPHeaders::Set(std::string key, std::string value)
 {
-    m_HeaderStore[std::move(key)] = std::move(value);
+  m_HeaderStore[std::move(key)] = std::move(value);
 }
 
 const std::string& HTTPHeaders::Get(const std::string& key) const
 {
-    if(auto it = m_HeaderStore.find(key); it != m_HeaderStore.end())
-    {
+  if(auto it = m_HeaderStore.find(key); it != m_HeaderStore.end())
+  {
 	return it->second;
-    }
+  }
 
-    static const std::string empty;
-    return empty;
+  static const std::string empty;
+  return empty;
 }
 
 bool HTTPHeaders::Has(const std::string& key) const
 {
-    return m_HeaderStore.find(key) != m_HeaderStore.end();
+  return m_HeaderStore.find(key) != m_HeaderStore.end();
 }
 
 std::string HTTPHeaders::ToString() const
 {
-    std::string result;
+  std::string result;
 
-    for(const auto& [key, value] : m_HeaderStore)
-    {
+  for(const auto& [key, value] : m_HeaderStore)
+  {
 	result += ToString(key);
-    }
+  }
 
-    return result;
+  return result;
 }
 
 std::string HTTPHeaders::ToString(const std::string& key) const
 {
-    // Key: Value\r\n
-    return key + ": " + Get(key) + CRLF;
+  // Key: Value\r\n
+  return key + ": " + Get(key) + CRLF;
 }

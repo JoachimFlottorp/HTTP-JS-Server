@@ -2,8 +2,8 @@
 
 std::string HTTPStatus::GetReasonPhrase(int statusCode)
 {
-    switch(statusCode)
-    {
+  switch(statusCode)
+  {
 	case 100: return "Continue";
 	case 101: return "Switching Protocols";
 	case 102: return "Processing";
@@ -68,5 +68,5 @@ std::string HTTPStatus::GetReasonPhrase(int statusCode)
 	case 510: return "Not Extended";
 	case 511: return "Network Authentication Required";
 	default: return "Unknown";
-    }
+  }
 }

@@ -23,8 +23,8 @@ SpacesInContainerLiterals: false
 SpacesBeforeTrailingComments: 1
 Standard: c++17
 BreakBeforeBinaryOperators: All
-IndentWidth: 4
 UseTab: Always
+TabWidth: 4
 ColumnLimit: 120
 IndentCaseBlocks: true
 IndentCaseLabels: true
