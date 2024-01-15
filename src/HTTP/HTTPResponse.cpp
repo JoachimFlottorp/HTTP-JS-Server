@@ -2,12 +2,12 @@
 #include "HTTPStatus.hpp"
 
 HTTPStatusLine::HTTPStatusLine(std::string version, int statusCode, std::string reasonPhrase)
-    : version(std::move(version)), statusCode(statusCode), reasonPhrase(std::move(reasonPhrase))
+	: version(std::move(version)), statusCode(statusCode), reasonPhrase(std::move(reasonPhrase))
 {
 }
 
 HTTPResponse::HTTPResponse(HTTPStatusLine statusLine, HTTPHeaders headers, std::string body)
-    : m_StatusLine(std::move(statusLine)), m_Headers(std::move(headers)), m_Body(std::move(body))
+	: m_StatusLine(std::move(statusLine)), m_Headers(std::move(headers)), m_Body(std::move(body))
 {
 }
 

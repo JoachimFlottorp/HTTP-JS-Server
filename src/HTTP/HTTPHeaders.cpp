@@ -12,8 +12,8 @@ std::string ConsumeUntil(const std::string& data, u32& index, const std::string&
 
   if(endIndex == std::string_view::npos)
   {
-    index = data.size();
-    return data.substr(startIndex);
+	index = data.size();
+	return data.substr(startIndex);
   }
 
   index = endIndex;
@@ -45,38 +45,38 @@ HTTPHeaders HTTPHeaders::FromString(const std::string& data)
 
   while(true)
   {
-    // 1. Consume header until we reach CRLF.
-    auto components = ConsumeUntil(data, index, CRLF);
-    if(components.empty())
-    {
-      break;
-    }
+	// 1. Consume header until we reach CRLF.
+	auto components = ConsumeUntil(data, index, CRLF);
+	if(components.empty())
+	{
+	  break;
+	}
 
-    // 2. Split header into key and value.
-    auto colonIndex = components.find(':');
+	// 2. Split header into key and value.
+	auto colonIndex = components.find(':');
 
-    auto key = components.substr(0, colonIndex);
-    auto value = components.substr(colonIndex + 1);
+	auto key = components.substr(0, colonIndex);
+	auto value = components.substr(colonIndex + 1);
 
-    // 3. Trim whitespace.
-    key.erase(0, key.find_first_not_of(' '));
-    key.erase(key.find_last_not_of(' ') + 1);
+	// 3. Trim whitespace.
+	key.erase(0, key.find_first_not_of(' '));
+	key.erase(key.find_last_not_of(' ') + 1);
 
-    value.erase(0, value.find_first_not_of(' '));
-    value.erase(value.find_last_not_of(' ') + 1);
+	value.erase(0, value.find_first_not_of(' '));
+	value.erase(value.find_last_not_of(' ') + 1);
 
-    // FIXME: Should be placed somewhere else.
-    // This should denote end of headers.
-    if(key == CRLF)
-    {
-      break;
-    }
+	// FIXME: Should be placed somewhere else.
+	// This should denote end of headers.
+	if(key == CRLF)
+	{
+	  break;
+	}
 
-    // 4. Add header to header store.
-    headers.Set(std::move(key), std::move(value));
+	// 4. Add header to header store.
+	headers.Set(std::move(key), std::move(value));
 
-    // 5. Increment index to skip CRLF.
-    index += 2;
+	// 5. Increment index to skip CRLF.
+	index += 2;
   }
 
   return headers;
@@ -95,7 +95,7 @@ const std::string& HTTPHeaders::Get(const std::string& key) const
 {
   if(auto it = m_HeaderStore.find(key); it != m_HeaderStore.end())
   {
-    return it->second;
+	return it->second;
   }
 
   static const std::string empty;
@@ -113,7 +113,7 @@ std::string HTTPHeaders::ToString() const
 
   for(const auto& [key, value] : m_HeaderStore)
   {
-    result += ToString(key);
+	result += ToString(key);
   }
 
   return result;

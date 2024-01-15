@@ -15,12 +15,12 @@ HTTPRequestParser::ParseResult HTTPRequestParser::Parse(HTTPRequest& req, const 
 
   if(auto result = parser.ParseRequestLine(); result != ParseResult::Success)
   {
-    return result;
+	return result;
   }
 
   if(!parser.ExpectCRLF())
   {
-    return ParseResult::InvalidRequestLine;
+	return ParseResult::InvalidRequestLine;
   }
 
   parser.m_Index += 2;
@@ -30,7 +30,7 @@ HTTPRequestParser::ParseResult HTTPRequestParser::Parse(HTTPRequest& req, const 
 
   if(auto result = parser.ParseBody(); result != ParseResult::Success)
   {
-    return result;
+	return result;
   }
 
   return ParseResult::Success;
@@ -50,7 +50,7 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseRequestLine()
   auto method = ConsumeUntil(SP);
   if(method.empty())
   {
-    return ParseResult::InvalidMethod;
+	return ParseResult::InvalidMethod;
   }
   m_Index++;
 
@@ -59,19 +59,19 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseRequestLine()
   auto uri = ConsumeUntil(SP);
   if(uri.empty())
   {
-    return ParseResult::InvalidURI;
+	return ParseResult::InvalidURI;
   }
   m_Index++;
 
   auto version = ConsumeUntil(CRLF);
   if(version.empty())
   {
-    return ParseResult::InvalidVersion;
+	return ParseResult::InvalidVersion;
   }
 
   if(!ExpectCRLF())
   {
-    return ParseResult::InvalidVersion;
+	return ParseResult::InvalidVersion;
   }
 
   m_Request.m_RequestLine = HTTPRequestLine(enumMethod, uri, version);
@@ -95,13 +95,13 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseBody()
 
   if(!CheckBody())
   {
-    // Ignore body.
-    return ParseResult::Success;
+	// Ignore body.
+	return ParseResult::Success;
   }
 
   if(!ExpectCRLF())
   {
-    return ParseResult::InvalidBody;
+	return ParseResult::InvalidBody;
   }
 
   m_Request.m_Body = m_Data.substr(m_Index, m_BodySize);
@@ -114,22 +114,22 @@ bool HTTPRequestParser::CheckBody()
   // 1. If the METHOD is HEAD, the server MUST NOT return a message-body in the response.
   if(m_Request.GetMethod() == HTTPMethod::HEAD)
   {
-    return false;
+	return false;
   }
 
   // 2. Check for Content-Length header.
   if(m_Request.GetHeaders().Has("Content-Length"))
   {
-    try
-    {
-      auto contentLength = std::stoi(m_Request.GetHeaders().Get("Content-Length"));
-      m_BodySize = contentLength;
-      return m_Data.size() - m_Index >= contentLength;
-    }
-    catch(...)
-    {
-      return false;
-    }
+	try
+	{
+	  auto contentLength = std::stoi(m_Request.GetHeaders().Get("Content-Length"));
+	  m_BodySize = contentLength;
+	  return m_Data.size() - m_Index >= contentLength;
+	}
+	catch(...)
+	{
+	  return false;
+	}
   }
 
   // FIXME: 3. Check for Transfer-Encoding header.
@@ -145,13 +145,13 @@ std::string HTTPRequestParser::ConsumeUntil(char c)
 
   while(m_Index < m_Data.size())
   {
-    if(m_Data[m_Index] == c)
-    {
-      return temp;
-    }
+	if(m_Data[m_Index] == c)
+	{
+	  return temp;
+	}
 
-    temp += m_Data[m_Index];
-    ++m_Index;
+	temp += m_Data[m_Index];
+	++m_Index;
   }
 
   return temp;
@@ -163,16 +163,16 @@ std::string HTTPRequestParser::ConsumeUntil(const std::string& str)
 
   while(m_Index < m_Data.size())
   {
-    if(m_Data[m_Index] == str[0])
-    {
-      if(m_Data.substr(m_Index, str.size()) == str)
-      {
-	return temp;
-      }
-    }
+	if(m_Data[m_Index] == str[0])
+	{
+	  if(m_Data.substr(m_Index, str.size()) == str)
+	  {
+		return temp;
+	  }
+	}
 
-    temp += m_Data[m_Index];
-    ++m_Index;
+	temp += m_Data[m_Index];
+	++m_Index;
   }
 
   return temp;
@@ -182,7 +182,7 @@ bool HTTPRequestParser::ExpectCRLF()
 {
   if(m_Index + 1 >= m_Data.size())
   {
-    return false;
+	return false;
   }
 
   return m_Data[m_Index] == CR && m_Data[m_Index + 1] == LF;
