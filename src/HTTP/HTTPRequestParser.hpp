@@ -7,36 +7,36 @@
 
 class HTTPRequestParser
 {
-  public:
-    enum class ParseResult
-    {
+public:
+  enum class ParseResult
+  {
 	Success,
 	InvalidRequestLine,
 	InvalidMethod,
 	InvalidURI,
 	InvalidVersion,
 	InvalidBody
-    };
-    
-    static ParseResult Parse(HTTPRequest& req, const std::string& data);
+  };
 
-  private:
-    HTTPRequestParser(HTTPRequest& req, std::string data);
+  static ParseResult Parse(HTTPRequest& req, const std::string& data);
 
-    ParseResult ParseRequestLine();
-    ParseResult ParseHeaders();
-    ParseResult ParseBody();
+private:
+  HTTPRequestParser(HTTPRequest& req, std::string data);
 
-    bool CheckBody();
+  ParseResult ParseRequestLine();
+  ParseResult ParseHeaders();
+  ParseResult ParseBody();
 
-    std::string ConsumeUntil(char c);
-    std::string ConsumeUntil(const std::string& str);
+  bool CheckBody();
 
-    bool ExpectCRLF();
+  std::string ConsumeUntil(char c);
+  std::string ConsumeUntil(const std::string& str);
 
-  private:
-    HTTPRequest& m_Request;
-    std::string m_Data;
-    u32 m_Index {0};
-    u32 m_BodySize {0};
+  bool ExpectCRLF();
+
+private:
+  HTTPRequest& m_Request;
+  std::string m_Data;
+  u32 m_Index {0};
+  u32 m_BodySize {0};
 }; // namespace HTTPRequestParser

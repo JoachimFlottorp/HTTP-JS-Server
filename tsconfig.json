@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "include": [
+      "types.d.ts"
+    ]
+  },
+  "exclude": [
+    "Tests"
+  ]
+}

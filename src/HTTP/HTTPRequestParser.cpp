@@ -81,9 +81,13 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseRequestLine()
 
 HTTPRequestParser::ParseResult HTTPRequestParser::ParseHeaders()
 {
-  auto headers = HTTPHeaders::FromString(m_Data.substr(m_Index));
+  auto result = HTTPHeaders::FromString(m_Data.substr(m_Index));
 
-  m_Request.m_Headers = std::move(headers);
+  auto header = result.first;
+  auto length = result.second;
+
+  m_Request.m_Headers = header;
+  m_Index += length;
 
   return ParseResult::Success;
 }
@@ -103,6 +107,10 @@ HTTPRequestParser::ParseResult HTTPRequestParser::ParseBody()
   {
 	return ParseResult::InvalidBody;
   }
+
+  // FIXME: There is some bug here the m_BodySize is one larger than m_Index + m_BodySize.
+  // 		This is an issue with something that increments m_Index.
+  m_Index += 2;
 
   m_Request.m_Body = m_Data.substr(m_Index, m_BodySize);
 

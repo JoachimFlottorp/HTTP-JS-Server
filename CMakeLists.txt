@@ -3,6 +3,7 @@ project(HTTP_JS_Server)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_subdirectory(thirdparty/dukglue)
 add_subdirectory(src)
 
 include(FeatureSummary)

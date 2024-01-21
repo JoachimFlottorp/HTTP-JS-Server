@@ -31,7 +31,7 @@ bool CaseInsensitiveComparer::operator()(const std::string& lhs, const std::stri
   // clang-format on
 }
 
-HTTPHeaders HTTPHeaders::FromString(const std::string& data)
+std::pair<HTTPHeaders, u32> HTTPHeaders::FromString(const std::string& data)
 {
   //    message-header = field-name ":" [ field-value ]
   //		       field-name     = token
@@ -79,7 +79,7 @@ HTTPHeaders HTTPHeaders::FromString(const std::string& data)
 	index += 2;
   }
 
-  return headers;
+  return {std::move(headers), index};
 }
 
 HTTPHeaders::HTTPHeaders()
