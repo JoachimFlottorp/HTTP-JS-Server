@@ -50,6 +50,15 @@ HTTPResponse& HTTPResponse::SetHeader(const std::string& key, const std::string&
   return *this;
 }
 
+HTTPResponse& HTTPResponse::SetText(const std::string& text)
+{
+  m_Body = text;
+  m_Headers.Set("Content-Type", "text/plain");
+  m_Headers.Set("Content-Length", std::to_string(m_Body.size()));
+
+  return *this;
+}
+
 HTTPResponse& HTTPResponse::SetBody(std::string body)
 {
   m_Body = std::move(body);

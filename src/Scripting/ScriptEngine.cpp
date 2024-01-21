@@ -51,6 +51,11 @@ ScriptEngine::~ScriptEngine()
   }
 }
 
+DukPtr ScriptEngine::GetContext()
+{
+  return m_Context;
+}
+
 void ScriptEngine::Execute(const std::string& script)
 {
   i32 result = duk_peval_string(m_Context.get(), script.c_str());
@@ -144,6 +149,11 @@ void ScriptEngine::AddRouter(const std::string& prefix, ScriptRouter* router)
   m_Routers[prefix] = router;
 }
 
+const RouterMap& ScriptEngine::GetRouters() const
+{
+  return m_Routers;
+}
+
 ScriptRouter::ScriptRouter(std::string prefix) : m_Prefix(std::move(prefix))
 {
   // FIXME: This should be changed.
@@ -155,9 +165,26 @@ ScriptRouter::ScriptRouter(std::string prefix) : m_Prefix(std::move(prefix))
 
 duk_ret_t ScriptRouter::RegisterGet(duk_context* ctx)
 {
-  // Arg 1: path
-  // Arg 2: function
+  return Register(ctx, HTTPMethod::GET);
+}
 
+duk_ret_t ScriptRouter::RegisterPost(duk_context* ctx)
+{
+  return Register(ctx, HTTPMethod::POST);
+}
+
+duk_ret_t ScriptRouter::RegisterPut(duk_context* ctx)
+{
+  return Register(ctx, HTTPMethod::PUT);
+}
+
+duk_ret_t ScriptRouter::RegisterDelete(duk_context* ctx)
+{
+  return Register(ctx, HTTPMethod::DELETE);
+}
+
+duk_ret_t ScriptRouter::Register(duk_context* ctx, HTTPMethod method)
+{
   auto check = Precheck(ctx);
   if(check != 0)
 	return check;
@@ -174,39 +201,12 @@ duk_ret_t ScriptRouter::RegisterGet(duk_context* ctx)
   duk_pop(ctx);
 
   // Register the route.
-  m_Routes.push_back({path, HTTPMethod::GET, static_cast<u32>(idx)});
+  m_Routes.push_back({path, method, static_cast<u32>(idx)});
 
   // Return "this"
   duk_push_this(ctx);
 
   return 1;
-}
-
-duk_ret_t ScriptRouter::RegisterPost(duk_context* ctx)
-{
-  auto check = Precheck(ctx);
-  if(check != 0)
-	return check;
-
-  return 0;
-}
-
-duk_ret_t ScriptRouter::RegisterPut(duk_context* ctx)
-{
-  auto check = Precheck(ctx);
-  if(check != 0)
-	return check;
-
-  return 0;
-}
-
-duk_ret_t ScriptRouter::RegisterDelete(duk_context* ctx)
-{
-  auto check = Precheck(ctx);
-  if(check != 0)
-	return check;
-
-  return 0;
 }
 
 duk_ret_t ScriptRouter::Precheck(duk_context* ctx)
@@ -233,4 +233,9 @@ duk_ret_t ScriptRouter::Precheck(duk_context* ctx)
   }
 
   return 0;
+}
+
+const std::vector<ScriptRouter::Route>& ScriptRouter::GetRoutes()
+{
+  return m_Routes;
 }

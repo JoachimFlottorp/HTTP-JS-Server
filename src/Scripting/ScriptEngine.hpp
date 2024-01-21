@@ -34,7 +34,10 @@ struct ScriptRouter
   duk_ret_t RegisterPut(duk_context*);
   duk_ret_t RegisterDelete(duk_context*);
 
+  const std::vector<Route>& GetRoutes();
+
 private:
+  duk_ret_t Register(duk_context*, HTTPMethod);
   duk_ret_t Precheck(duk_context*);
 
 private:
@@ -42,6 +45,8 @@ private:
 
   std::vector<Route> m_Routes;
 };
+
+typedef std::map<std::string, ScriptRouter*> RouterMap;
 
 class ScriptEngine
 {
@@ -52,10 +57,13 @@ public:
   ScriptEngine();
   ~ScriptEngine();
 
+  DukPtr GetContext();
+
   void Execute(const std::string& script);
   void Execute(const std::string& script, const std::filesystem::path& filename);
 
   void AddRouter(const std::string& prefix, ScriptRouter* router);
+  const RouterMap& GetRouters() const;
 
 private:
   void JS_FatalError(void* uData, const char* msg);
@@ -64,5 +72,5 @@ private:
 
 private:
   DukPtr m_Context;
-  std::map<std::string, ScriptRouter*> m_Routers;
+  RouterMap m_Routers;
 };

@@ -3,76 +3,13 @@
 #include "HTTP/HTTPStatus.hpp"
 #include "Network/ListenSocket.hpp"
 #include "Scripting/ScriptEngine.hpp"
+#include "dukglue/dukglue.h"
 
-#include <functional>
 #include <iostream>
-#include <memory>
-#include <utility>
-#include <vector>
-
-struct Route
-{
-  typedef std::function<void(const HTTPRequest&, HTTPResponse&)> HandlerFunc;
-
-  std::string path;
-  HTTPMethod method;
-  HandlerFunc handler;
-};
-
-class Router
-{
-public:
-  Router() = default;
-  ~Router() = default;
-
-  void AddRoute(const std::string& path, HTTPMethod method, Route::HandlerFunc handler)
-  {
-	m_Routes.push_back({path, method, std::move(handler)});
-  }
-
-  void HandleRequest(const HTTPRequest& request, HTTPResponse& response)
-  {
-	// FIXME: This should support trie matching.
-	// 		  https://ayende.com/blog/173313/trie-based-routing
-
-	for(auto& route : m_Routes)
-	{
-	  if(route.method != request.GetMethod())
-		continue;
-
-	  if(route.path != request.GetURI())
-		continue;
-
-	  route.handler(request, response);
-	  return;
-	}
-
-	response.SetStatusCode(HTTPStatus::NotFound);
-  }
-
-private:
-  std::vector<Route> m_Routes;
-};
-
-void index(const HTTPRequest& request, HTTPResponse& response)
-{
-  response
-	  .SetStatusCode(200)					   //
-	  .SetHeader("Content-Type", "text/plain") //
-	  .SetBody("Hello, World!");
-}
-
-void test(const HTTPRequest& request, HTTPResponse& response)
-{
-  response
-	  .SetStatusCode(200)					   //
-	  .SetHeader("Content-Type", "text/plain") //
-	  .SetBody("Hello, Test!");
-}
 
 void eval(const HTTPRequest& request, HTTPResponse& response)
 {
-  auto script = request.GetBody();
+  const auto& script = request.GetBody();
 
   ScriptEngine::The()->Execute(script);
 
@@ -87,14 +24,13 @@ int main()
   constexpr auto port = 27015;
 
   ScriptEngine::Initialize();
+  auto scriptEngine = ScriptEngine::The();
+  auto ctx = scriptEngine->GetContext();
+
+  dukglue_register_method(ctx.get(), &HTTPResponse::SetText, "setText");
 
   ListenSocket socket {ListenSocket::SocketSettings(port)};
   socket.Listen();
-
-  Router router;
-  router.AddRoute("/", HTTPMethod::GET, index);
-  router.AddRoute("/test", HTTPMethod::GET, test);
-  router.AddRoute("/eval", HTTPMethod::POST, eval);
 
   std::cout << "Listening on port " << port << std::endl;
 
@@ -131,8 +67,78 @@ int main()
 	}
 
 	HTTPResponse response;
-	router.HandleRequest(request, response);
+	if(request.GetURI() == "/eval")
+	{
+	  eval(request, response);
+	}
+	else
+	{
+	  const auto& routers = ScriptEngine::The()->GetRouters();
 
+	  // Find the router that begins with the incoming request's URI. But not the '/' router
+	  // because that's the default router.
+	  auto router = std::find_if(routers.begin(), routers.end(), [&request](const auto& router)
+								 { return request.GetURI().find(router.first) == 0 && router.first != "/"; });
+
+	  if(router != routers.end())
+	  {
+		std::cout << "Found router " << router->first << std::endl;
+
+		auto pathRoutes = router->second->GetRoutes();
+		// If the router is found, then we need to strip the prefix from the URI. and find the sub-function that matches
+		// the tail.
+		auto tail = request.GetURI().substr(router->first.size());
+		std::cout << "Tail: " << tail << std::endl;
+		if(tail.empty())
+		  tail = "/";
+
+		// FIXME: This should support trie matching.
+		// 		  https://ayende.com/blog/173313/trie-based-routing
+
+		auto route = std::find_if(pathRoutes.begin(), pathRoutes.end(),
+								  [&tail](const auto& route) { return route.path == tail; });
+
+		if(route != pathRoutes.end())
+		{
+		  std::cout << "Found route " << route->path << std::endl;
+
+		  // Now to call the JavaScript handler.
+		  auto ctx = ScriptEngine::The()->GetContext();
+		  duk_push_global_object(ctx.get());
+		  duk_get_prop_string(ctx.get(), -1, "__functionStore");
+		  duk_get_prop_index(ctx.get(), -1, route->handlerIdx);
+
+		  // FIXME: Is placing a stack-allocated object into JavaScript land a bad idea?
+		  dukglue_push(ctx.get(), &request);
+		  dukglue_push(ctx.get(), &response);
+
+		  i32 result = duk_pcall(ctx.get(), 2);
+		  if(result != DUK_EXEC_SUCCESS)
+		  {
+			std::cout << "Failed to execute JavaScript: " << duk_safe_to_string(ctx.get(), -1) << std::endl;
+			duk_pop(ctx.get());
+		  }
+
+		  duk_pop(ctx.get());
+		  duk_pop(ctx.get());
+		  duk_pop(ctx.get());
+		}
+		else
+		{
+		  std::cout << "No route found for " << request.GetURI() << std::endl;
+
+		  response.SetStatusCode(404);
+		}
+	  }
+	  else
+	  {
+		std::cout << "No router found for " << request.GetURI() << std::endl;
+
+		response.SetStatusCode(404);
+	  }
+	}
+
+	// FIXME: If the body is empty. then automatically add generic message matching status code.
 	client.Send(response.ToString());
   }
 
