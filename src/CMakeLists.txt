@@ -9,7 +9,7 @@ set(SOURCE main.cpp
         HTTP/HTTPStatus.cpp
         Scripting/ScriptEngine.cpp
         Scripting/ScriptLogging.cpp
-        Scripting/ScriptLogging.hpp
+        Scripting/duk_module_node.cpp
 )
 
 find_package(duktape CONFIG REQUIRED)

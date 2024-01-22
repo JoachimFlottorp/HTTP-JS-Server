@@ -1,3 +1,5 @@
+declare function require(name: string): any;
+
 type HTTPParams = Record<string, any>;
 
 interface HTTPRequest {

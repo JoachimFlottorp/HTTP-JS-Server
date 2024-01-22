@@ -67,6 +67,8 @@ public:
 
 private:
   void JS_FatalError(void* uData, const char* msg);
+  static duk_ret_t JS_ResolveModule(duk_context* ctx);
+  static duk_ret_t JS_LoadModule(duk_context* ctx);
 
   void RegisterGlobalObjects();
 

@@ -1,6 +1,7 @@
 #include "ScriptEngine.hpp"
 #include "Defines.hpp"
 #include "ScriptLogging.hpp"
+#include "duk_module_node.hpp"
 
 #include <dukglue/dukglue.h>
 
@@ -100,9 +101,67 @@ void ScriptEngine::Execute(const std::string& script, const std::filesystem::pat
   duk_pop(m_Context.get());
 }
 
+void ScriptEngine::AddRouter(const std::string& prefix, ScriptRouter* router)
+{
+  m_Routers[prefix] = router;
+}
+
+const RouterMap& ScriptEngine::GetRouters() const
+{
+  return m_Routers;
+}
+
 void ScriptEngine::JS_FatalError(void* uData, const char* msg)
 {
   std::cout << "Caught a fatal exception in JavaScript land: " << msg << std::endl;
+}
+
+duk_ret_t ScriptEngine::JS_ResolveModule(duk_context* ctx)
+{
+  // requestedID is the input to the require function. Aka the name of a module to load from disk.
+
+  auto requestedID = std::string(duk_get_string(ctx, 0));
+  auto callingID = std::string(duk_get_string(ctx, 1));
+  std::string resolvedID;
+  auto asPath = std::filesystem::path(requestedID);
+
+  // If the path is a directory
+  if(asPath.has_filename() && asPath.extension().empty())
+  {
+	// assume index.js
+	asPath /= "index.js";
+  }
+
+  if(asPath.extension().empty())
+	asPath += ".js";
+
+  // check if file exists
+  if(std::filesystem::exists(asPath))
+  {
+	resolvedID = asPath.string();
+	duk_push_string(ctx, resolvedID.c_str());
+
+	return 1;
+  }
+
+  // Nothing found. Throw an error.
+  duk_error(ctx, DUK_ERR_ERROR, "Module not found: %s", requestedID.c_str());
+  return DUK_ERR_ERROR;
+}
+
+duk_ret_t ScriptEngine::JS_LoadModule(duk_context* ctx)
+{
+  auto resolvedID = std::string(duk_get_string(ctx, 0));
+
+  std::ifstream file(resolvedID);
+  std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+
+  duk_dup(ctx, -3);
+  duk_put_prop_string(ctx, -2, "filename");
+
+  duk_push_string(ctx, script.c_str());
+
+  return 1;
 }
 
 void ScriptEngine::RegisterGlobalObjects()
@@ -125,6 +184,16 @@ void ScriptEngine::RegisterGlobalObjects()
 	dukglue_register_method_varargs(m_Context.get(), &ScriptRouter::RegisterPost, "post");
 	dukglue_register_method_varargs(m_Context.get(), &ScriptRouter::RegisterPut, "put");
 	dukglue_register_method_varargs(m_Context.get(), &ScriptRouter::RegisterDelete, "delete");
+
+	// "require"
+	duk_push_object(m_Context.get());
+
+	duk_push_c_function(m_Context.get(), JS_ResolveModule, DUK_VARARGS);
+	duk_put_prop_string(m_Context.get(), -2, "resolve");
+	duk_push_c_function(m_Context.get(), JS_LoadModule, DUK_VARARGS);
+	duk_put_prop_string(m_Context.get(), -2, "load");
+
+	duk_module_node_init(m_Context.get());
   }
 
   // FIXME: Load better.
@@ -142,16 +211,6 @@ void ScriptEngine::RegisterGlobalObjects()
 
 	Execute(script, filename);
   }
-}
-
-void ScriptEngine::AddRouter(const std::string& prefix, ScriptRouter* router)
-{
-  m_Routers[prefix] = router;
-}
-
-const RouterMap& ScriptEngine::GetRouters() const
-{
-  return m_Routers;
 }
 
 ScriptRouter::ScriptRouter(std::string prefix) : m_Prefix(std::move(prefix))
