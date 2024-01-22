@@ -196,21 +196,15 @@ void ScriptEngine::RegisterGlobalObjects()
 	duk_module_node_init(m_Context.get());
   }
 
-  // FIXME: Load better.
-  for(auto& entry : std::filesystem::directory_iterator("lib"))
-  {
-	const auto& path = entry.path();
-	auto filename = path.filename();
-	auto ext = path.extension();
+  // FIXME: Load lib/prelude.js as "main" module.
+  //  		TypeError: string required, found [object Object] (stack index -2)
+  // 		from "duk_module_node_peval_main"
 
-	if(ext != ".js")
-	  continue;
+  auto prelude = std::filesystem::path("lib/prelude.js");
+  std::ifstream file(prelude);
+  std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 
-	std::ifstream file(path);
-	std::string script((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-
-	Execute(script, filename);
-  }
+  Execute(script, prelude);
 }
 
 ScriptRouter::ScriptRouter(std::string prefix) : m_Prefix(std::move(prefix))

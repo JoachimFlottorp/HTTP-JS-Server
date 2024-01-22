@@ -7,9 +7,10 @@
  */
 
 #include "duk_module_node.hpp"
+#include <filesystem>
 
 static duk_int_t duk__eval_module_source(duk_context* ctx, void* udata);
-static void duk__push_module_object(duk_context* ctx, const char* id, duk_bool_t main);
+static void duk__push_module_object(duk_context* ctx, const char* id, bool main);
 
 static duk_bool_t duk__get_cached_module(duk_context* ctx, const char* id)
 {
@@ -106,7 +107,7 @@ static duk_ret_t duk__handle_require(duk_context* ctx)
 	goto have_module; /* use the cached module */
   }
 
-  duk__push_module_object(ctx, id, 0 /*main*/);
+  duk__push_module_object(ctx, id, false);
   duk__put_cached_module(ctx); /* module remains on stack */
 
   /*
@@ -193,7 +194,7 @@ static void duk__push_require_function(duk_context* ctx, const char* id)
   duk_pop(ctx);
 }
 
-static void duk__push_module_object(duk_context* ctx, const char* id, duk_bool_t main)
+static void duk__push_module_object(duk_context* ctx, const char* id, bool main)
 {
   duk_push_object(ctx);
 
@@ -288,19 +289,21 @@ static duk_int_t duk__eval_module_source(duk_context* ctx, void* udata)
 }
 
 /* Load a module as the 'main' module. */
-duk_ret_t duk_module_node_peval_main(duk_context* ctx, const char* path)
+duk_ret_t duk_module_node_peval_main(duk_context* ctx, const std::filesystem::path& path)
 {
   /*
    *  Stack: [ ... source ]
    */
 
-  duk__push_module_object(ctx, path, 1 /*main*/);
+  auto asStr = path.string();
+  auto asC = asStr.c_str();
+  duk__push_module_object(ctx, asC, true);
   /* [ ... source module ] */
 
   duk_dup(ctx, 0);
   /* [ ... source module source ] */
 
-  return duk_safe_call(ctx, duk__eval_module_source, NULL, 2, 1);
+  return duk_safe_call(ctx, duk__eval_module_source, nullptr, 2, 1);
 }
 
 void duk_module_node_init(duk_context* ctx)
